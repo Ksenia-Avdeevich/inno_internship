@@ -80,7 +80,54 @@ where
 Вывести топ-3 актеров, которые чаще всего появлялись в фильмах категории «Children». 
 Если у нескольких актеров одинаковое количество фильмов, вывести их всех.
 */
+with child as (
+select
+	film_id
+from
+	film_category fc
+join category ca on
+	ca.category_id = fc.category_id
+where
+	ca.name = 'Children'
+),
+act as (
+select
+	a.actor_id,
+	count(fa.film_id) as count_f
+from
+	actor a
+join film_actor fa on
+	fa.actor_id = a.actor_id
+join child on
+	child.film_id = fa.film_id
+group by
+	a.actor_id
+),
+ranked_actors as (
+select
+	act.actor_id,
+	dense_rank() over (
+order by
+	act.count_f desc) as rnk
+from
+	act
+)
 
+select
+	actor.first_name,
+	actor.last_name,
+	ranked_actors.rnk,
+	act.count_f
+from
+	actor
+join ranked_actors on
+	ranked_actors.actor_id = actor.actor_id
+join act on
+	act.actor_id = actor.actor_id
+where
+	ranked_actors.rnk < 4
+order by
+	ranked_actors.rnk asc;
 
 
 /* 6.
@@ -111,3 +158,42 @@ order by
 этому городу) и название которого начинается на букву «A». Сделать то же 
 самое для городов, в названии которых есть дефис («-»). Написать всё в одном запросе.
 */
+
+with city_A as(
+select ci.city, address.address_id from city ci
+join address on address.city_id = ci.city_id 
+where ci.city like 'A%' or ci.city like '%-%'
+),
+t1 as (
+select
+	city_A.city as A_city,
+	c.name,
+	sum(extract(epoch from (r.return_date - r.rental_date)) / 3600) as hours_rent
+from
+	category c
+join film_category fc on
+	fc.category_id = c.category_id
+join inventory i on
+	i.film_id = fc.film_id
+join rental r on
+	r.inventory_id = i.inventory_id
+join customer cu on
+	cu.customer_id = r.customer_id
+join city_A on
+	city_A.address_id = cu.address_id
+group by
+	c.name,
+	city_A.city
+)
+
+select
+	distinct on
+	(t1.A_city) *
+from
+	t1
+order by
+	t1.A_city,
+	t1.hours_rent desc nulls last;
+
+
+
