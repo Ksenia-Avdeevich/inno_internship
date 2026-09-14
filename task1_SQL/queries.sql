@@ -177,6 +177,3 @@ from
 order by
 	t1.A_city,
 	t1.hours_rent desc nulls last;
-
-
-
