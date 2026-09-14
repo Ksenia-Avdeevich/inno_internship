@@ -80,54 +80,40 @@ where
 Вывести топ-3 актеров, которые чаще всего появлялись в фильмах категории «Children». 
 Если у нескольких актеров одинаковое количество фильмов, вывести их всех.
 */
-with child as (
+/* 5.
+Вывести топ-3 актеров, которые чаще всего появлялись в фильмах категории «Children». 
+Если у нескольких актеров одинаковое количество фильмов, вывести их всех.
+*/
+with t as (
 select
-	film_id
-from
-	film_category fc
-join category ca on
-	ca.category_id = fc.category_id
-where
-	ca.name = 'Children'
-),
-act as (
-select
-	a.actor_id,
-	count(fa.film_id) as count_f
+	a.first_name,
+	a.last_name,
+	dense_rank() over (
+order by
+	count(fa.film_id) desc) as ranked_actors,
+	count(fa.film_id) as films_count
 from
 	actor a
 join film_actor fa on
 	fa.actor_id = a.actor_id
-join child on
-	child.film_id = fa.film_id
-group by
-	a.actor_id
-),
-ranked_actors as (
-select
-	act.actor_id,
-	dense_rank() over (
-order by
-	act.count_f desc) as rnk
-from
-	act
-)
-
-select
-	actor.first_name,
-	actor.last_name,
-	ranked_actors.rnk,
-	act.count_f
-from
-	actor
-join ranked_actors on
-	ranked_actors.actor_id = actor.actor_id
-join act on
-	act.actor_id = actor.actor_id
+join film_category fc on
+	fc.film_id = fa.film_id
+join category ca on
+	ca.category_id = fc.category_id
 where
-	ranked_actors.rnk < 4
+	ca.name = 'Children'
+group by
+	a.actor_id,
+	a.first_name,
+	a.last_name
 order by
-	ranked_actors.rnk asc;
+	ranked_actors asc)
+select
+	*
+from
+	t
+where
+	t.ranked_actors <= 3;
 
 
 /* 6.
