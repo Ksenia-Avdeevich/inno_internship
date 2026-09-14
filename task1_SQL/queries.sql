@@ -12,8 +12,7 @@ group by
 	category.category_id,
 	category.name
 order by
-	count(film_category.film_id) desc;
-
+	2 desc;
 
 
 /* 2.
@@ -71,10 +70,11 @@ select
 	f.title
 from
 	film f
-left join inventory i on
-	f.film_id = i.film_id
 where
-	i.inventory_id is null;
+	not exists(
+	select 1 
+	from inventory i 
+	where f.film_id = i.film_id);
 
 /* 5.
 Вывести топ-3 актеров, которые чаще всего появлялись в фильмах категории «Children». 
@@ -123,8 +123,8 @@ where
 */
 select
 	c2.city ,
-	sum(case when c.active = 1 then 1 else 0 end) as activ,
-	sum(case when c.active = 0 then 1 else 0 end) as pas
+	count(*) filter (where c.active = 1) as activ,
+	count(*) filter (where c.active = 0) as pas
 from
 	customer c
 join address a on
