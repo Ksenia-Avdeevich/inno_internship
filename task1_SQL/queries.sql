@@ -52,14 +52,19 @@ from
 	category c
 join film_category fc on
 	fc.category_id = c.category_id
-join film f on
-	f.film_id = fc.film_id
+join inventory i  on
+	i.film_id = fc.film_id
+join rental r   on
+	r.inventory_id  = i.inventory_id 
+join payment p on
+	p.rental_id  = r.rental_id 
 group by
 	c.category_id,
 	c.name
 order by
-	sum(f.replacement_cost) desc
+	sum(p.amount) desc
 limit 1;
+
 
 
 /* 4.
